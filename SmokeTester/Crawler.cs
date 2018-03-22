@@ -12,6 +12,8 @@ namespace Forte.SmokeTester
 {
     public class Crawler
     {
+        private int NumberOfActiveWorkers => this.maxWorkers - this.workersPool.Count;
+
         private readonly BlockingCollection<Worker> workersPool = new BlockingCollection<Worker>(new ConcurrentBag<Worker>());
         private readonly BlockingCollection<CrawlRequest> workQueue = new BlockingCollection<CrawlRequest>(new ConcurrentQueue<CrawlRequest>());
         private readonly ConcurrentDictionary<Uri, Uri> visitedUrls = new ConcurrentDictionary<Uri, Uri>();
@@ -35,12 +37,11 @@ namespace Forte.SmokeTester
             this.workQueue.Add(new CrawlRequest(startUrl));
             this.visitedUrls.TryAdd(startUrl, startUrl);
             
-            while (this.workQueue.Count > 0 || this.maxWorkers - this.workersPool.Count > 0)
+            while (this.workQueue.Count > 0 || this.NumberOfActiveWorkers > 0)
             {
                 if (this.workQueue.TryTake(out var request, TimeSpan.FromSeconds(5)) == false)
                     continue;
-                if (this.workersPool.TryTake(out var worker, TimeSpan.FromSeconds(5)) == false)
-                    continue;
+                var worker = this.workersPool.Take();                    
                 
                 worker.Run(async () =>
                 {
