@@ -1,134 +1,145 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
-using AngleSharp.Dom.Html;
-using AngleSharp.Html;
-using AngleSharp.Parser.Html;
 
 namespace Forte.SmokeTester
 {
     public class Crawler
     {
-        private int NumberOfActiveWorkers => this.maxWorkers - this.workersPool.Count;
+        private bool HaveMoreWork => this.workerPool.ActiveWorkersCount > 0 || this.workQueue.Count > 0;
 
-        private readonly BlockingCollection<Worker> workersPool = new BlockingCollection<Worker>(new ConcurrentBag<Worker>());
-        private readonly BlockingCollection<CrawlRequest> workQueue = new BlockingCollection<CrawlRequest>(new ConcurrentQueue<CrawlRequest>());
-        private readonly ConcurrentDictionary<Uri, Uri> visitedUrls = new ConcurrentDictionary<Uri, Uri>();
-        
-        private readonly int maxWorkers;
+        private readonly ILinkExtractor linkExtractor;
+        private readonly ICrawlRequestFilter crawlRequestFilter;
+        private readonly ICrawlerObserver observer;
+
+        private readonly WorkerPool workerPool;
         private readonly HttpClient httpClient = new HttpClient();
+        private readonly BlockingCollection<CrawlRequest> workQueue = new BlockingCollection<CrawlRequest>(new ConcurrentQueue<CrawlRequest>());
+        private readonly ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl> discoveredUrls = new ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl>();
 
-        public Crawler(int maxWorkers = 3)
+        public Crawler(WorkerPool workerPool, ICrawlRequestFilter crawlRequestFilter, ILinkExtractor linkExtractor, ICrawlerObserver observer, int maxWorkers = 3)
         {
-            this.maxWorkers = maxWorkers;
-            for (var i = 0; i < maxWorkers; i++)
-            {
-                this.workersPool.Add(new Worker(this));
-            }
+            this.crawlRequestFilter = crawlRequestFilter;
+            this.linkExtractor = linkExtractor;
+            this.observer = observer;
+            this.workerPool = workerPool;
         }
 
-        public IEnumerable<CrawlError> Crawl(Uri startUrl)
+        public void Enqueue(Uri url)
         {
-            var errors = new ConcurrentBag<CrawlError>();
-            
-            this.workQueue.Add(new CrawlRequest(startUrl));
-            this.visitedUrls.TryAdd(startUrl, startUrl);
-            
-            while (this.workQueue.Count > 0 || this.NumberOfActiveWorkers > 0)
-            {
-                if (this.workQueue.TryTake(out var request, TimeSpan.FromSeconds(5)) == false)
-                    continue;
-                var worker = this.workersPool.Take();                    
-                
-                worker.Run(async () =>
-                {
-                    Console.WriteLine(request.Url.ToString());
-
-                    try
-                    {
-                        using (var response = await this.httpClient.GetAsync(request.Url))
-                        {
-                            if (response.IsSuccessStatusCode)
-                            {
-                                var document = await ParseDocumentFromResponse(response);
-
-                                foreach (var link in document.Links)
-                                {
-                                    var u = new Uri(request.Url, new Uri(link.GetAttribute(AttributeNames.Href), UriKind.RelativeOrAbsolute));
-                                    if (this.visitedUrls.TryAdd(u, u) == false)
-                                        continue;
-
-                                    if (u.Host != startUrl.Host)
-                                        continue;
-
-                                    this.workQueue.Add(new CrawlRequest(u, request.Url));
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine($"{response.StatusCode}: {request.Url}");
-                                errors.Add(new CrawlError(request.Url, response.StatusCode, request.Referer));
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($"Exception: {request.Url}\n{e}");
-                        errors.Add(new CrawlError(request.Url, HttpStatusCode.Unused, request.Referer));
-                    }                    
-                });
-            }
-
-            return errors;
+            this.workQueue.Add(new CrawlRequest(url));
+            this.discoveredUrls.TryAdd(url, new CrawledUrlPropertiesImpl(url));
         }
 
-        private static async Task<IHtmlDocument> ParseDocumentFromResponse(HttpResponseMessage response)
-        {
-            IHtmlDocument document;
-            using (var contentStream = await response.Content.ReadAsStreamAsync())
-            {
-                var parser = new HtmlParser();
-                document = await parser.ParseAsync(contentStream);
-            }
-
-            return document;
-        }
-
-        private class CrawlRequest
-        {
-            public readonly Uri Url;
-            public readonly Uri Referer;
-
-            public CrawlRequest(Uri url, Uri referer = null)
-            {
-                Url = url;
-                Referer = referer;
-            }
-        }
-
-        private class Worker
-        {
-            private readonly Crawler crawler;
-
-            public Worker(Crawler crawler)
-            {
-                this.crawler = crawler;
-            }
-
-            public async void Run(Func<Task> task)
+        public async Task<IReadOnlyDictionary<Uri, CrawledUrlProperties>> Crawl(CancellationToken cancellationToken = default(CancellationToken))
+        {            
+            await Task.Run(() =>
             {
                 try
                 {
-                    await task();
+                    while (this.HaveMoreWork && cancellationToken.IsCancellationRequested == false)
+                    {
+                        if (this.workQueue.TryTake(out var request, 1000, cancellationToken) == false)
+                            continue;
+                
+                        this.workerPool.Run(async () =>
+                        {
+                            await this.Crawl(request, cancellationToken);
+                        });
+                    }
+
                 }
-                finally
+                catch (TaskCanceledException)
                 {
-                    this.crawler.workersPool.Add(this);                    
+                }
+            });
+
+            return this.discoveredUrls.ToDictionary(kvp => kvp.Key, kvp => (CrawledUrlProperties)kvp.Value);
+        }
+
+        private async Task Crawl(CrawlRequest request, CancellationToken cancellationToken)
+        {
+            this.observer.OnCrawling(request);
+            
+            try
+            {
+                using (var response = await this.httpClient.GetAsync(request.Url, cancellationToken))
+                {
+                    this.discoveredUrls[request.Url].status = response.StatusCode;
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var links = await this.linkExtractor.ExtractLinks(request, response.Content);
+                        foreach (var url in links)
+                        {
+                            if (cancellationToken.IsCancellationRequested)
+                                break;
+
+                            if (this.ProcessExtractedUrl(request, url))
+                            {
+                                var crawlRequest = new CrawlRequest(url, request.Url, request.Depth + 1);
+
+                                if (this.crawlRequestFilter.ShouldCrawl(crawlRequest) == false)
+                                    continue;
+
+                                this.workQueue.Add(crawlRequest, cancellationToken);                                    
+                            }
+                        }
+                    }
+                    else
+                    {
+                        this.observer.OnError(new CrawlError(request.Url, response.StatusCode, request.Referer));
+                    }
                 }
             }
+            catch (TaskCanceledException)
+            {
+            }
+            catch (Exception e)
+            {
+                this.observer.OnError(new CrawlError(request.Url, e, request.Referer));
+            }
         }
+
+        private bool ProcessExtractedUrl(CrawlRequest request, Uri url)
+        {
+            var newUrl = false;
+            if (this.discoveredUrls.TryGetValue(url, out var urlProperties) == false)
+            {
+                urlProperties = new CrawledUrlPropertiesImpl(url);
+                if (this.discoveredUrls.TryAdd(url, urlProperties))
+                {
+                    newUrl = true;
+                    this.observer.OnNewUrl(url);
+                }
+                else
+                {
+                    urlProperties = this.discoveredUrls[url];
+                }
+            }
+
+            urlProperties.referers.TryAdd(request.Url, 0);
+            
+            return newUrl;
+        }
+
+        private class CrawledUrlPropertiesImpl : CrawledUrlProperties
+        {
+            public override HttpStatusCode? Status => this.status;
+            public override IEnumerable<Uri> Referers => this.referers.Keys;
+
+            public HttpStatusCode? status;
+            public readonly ConcurrentDictionary<Uri, int> referers = new ConcurrentDictionary<Uri, int>();
+
+            public CrawledUrlPropertiesImpl(Uri url) : base(url)
+            {
+            }
+        }
+
     }
 }
