@@ -39,7 +39,7 @@ namespace Forte.SmokeTester
             }
             else
             {
-                Console.WriteLine($"{error.Status}: {error.Url} (Referer: {error.Referer}");
+                Console.WriteLine($"{error.Status}: {error.Url}" + (error.Referer == null ? string.Empty : $"(Referer: {error.Referer})"));
                 
                 if (error.Status == HttpStatusCode.NotFound)
                     this.warnings.Add(error);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,11 +13,14 @@ namespace Forte.SmokeTester
         public static int Main(string[] args)
         {
             return CommandLine.Parser.Default
-                .ParseArguments<Options>(args)
-                .MapResult(Run, errs => 1);
+                .ParseArguments<CrawlOptions, SitemapOptions>(args)
+                .MapResult(
+                    (CrawlOptions crawlOptions) => Run(crawlOptions),
+                    (SitemapOptions sitemapOptions) => Run(sitemapOptions),
+                 errs => 1);
         }
 
-        private static int Run(Options opts)
+        private static int Run(CommonOptions opts)
         {
             var cancelationTokenSource = new CancellationTokenSource();
             var observer = new CrawlerObserver(
@@ -25,7 +29,7 @@ namespace Forte.SmokeTester
                 opts.MaxUrls);          
             
             var crawler = CreateCrwaler(opts, observer);
-            crawler.Enqueue(new Uri(opts.StartUrl));
+            crawler.SetEntryUrl(new Uri(opts.GetStartUrl()));                
             
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
@@ -40,20 +44,32 @@ namespace Forte.SmokeTester
             return observer.Errors.Count > 0 ? 1 : 0;
         }
 
-        private static Crawler CreateCrwaler(Options opts, ICrawlerObserver observer)
+        private static Crawler CreateCrwaler(CommonOptions commonOptions, ICrawlerObserver observer)
         {
-            var startUrl = new Uri(opts.StartUrl);
+            var workerPool = new WorkerPool(commonOptions.NumberOfWorkers);
+            if (commonOptions is CrawlOptions opts)
+            {
+                var startUrl = new Uri(opts.StartUrl);
 
-            var linkExtractor = new DefaultLinkExtractor();
-            var crawlRequestFilter = new CompositeFilter(
-                new AuthorityFilter(startUrl.Authority),
-                new MaxDepthFilter(opts.MaxDepth));
+                var linkExtractor = new DefaultLinkExtractor();
+                var crawlRequestFilter = new CompositeFilter(
+                    new AuthorityFilter(startUrl.Authority),
+                    new MaxDepthFilter(opts.MaxDepth));
+                
+                return new Crawler(
+                    workerPool, 
+                    crawlRequestFilter,
+                    linkExtractor,
+                    observer);   
+            }
 
-            return new Crawler(
-                new WorkerPool(opts.NumberOfWorkers), 
-                crawlRequestFilter,
-                linkExtractor,
-                observer);
+            if (commonOptions is SitemapOptions)
+            {
+                return new Crawler(workerPool, observer, new SitemapLinkExtractor());
+            }
+            
+            throw new ArgumentException($"Not supported options type: {commonOptions.GetType()}");
+
         }
 
         private static void WriteSummary(IReadOnlyDictionary<Uri, CrawledUrlProperties> result, CrawlerObserver observer)
@@ -65,7 +81,11 @@ namespace Forte.SmokeTester
                 Console.WriteLine("\nCrawl warnings:\n");
                 foreach (var error in observer.Warnings)
                 {
-                    Console.WriteLine($"{error.Status}: {error.Url}\nReferers:\n  {string.Join("\n  ", result[error.Url].Referers)}\n");
+                    Console.WriteLine($"{error.Status}: {error.Url}");
+                    if (result[error.Url].Referers.Any())
+                    {
+                        Console.WriteLine($"Referers:\n  {string.Join("\n ", result[error.Url].Referers)}\n");
+                    }
                 }
             }
 
@@ -74,7 +94,11 @@ namespace Forte.SmokeTester
                 Console.WriteLine("\nCrawl errors:\n");
                 foreach (var error in observer.Errors)
                 {
-                    Console.WriteLine($"{error.Exception?.Message ?? error.Status.ToString()}: {error.Url}\nReferers:\n  {string.Join("\n  ", result[error.Url].Referers)}\n");
+                    Console.WriteLine($"{error.Exception?.Message ?? error.Status.ToString()}: {error.Url}");
+                    if (result[error.Url].Referers.Any())
+                    {
+                        Console.WriteLine($"Referers:\n  {string.Join("\n  ", result[error.Url].Referers)}\n");
+                    }
                 }
             }
         }

@@ -21,6 +21,8 @@ namespace Forte.SmokeTester
         private readonly HttpClient httpClient = new HttpClient();
         private readonly BlockingCollection<CrawlRequest> workQueue = new BlockingCollection<CrawlRequest>(new ConcurrentQueue<CrawlRequest>());
         private readonly ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl> discoveredUrls = new ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl>();
+        private readonly ISitemapLinkExtractor sitemapLinkExtractor;
+        private readonly CrawlMode crawlMode;
 
         public Crawler(WorkerPool workerPool, ICrawlRequestFilter crawlRequestFilter, ILinkExtractor linkExtractor, ICrawlerObserver observer, int maxWorkers = 3)
         {
@@ -28,9 +30,36 @@ namespace Forte.SmokeTester
             this.linkExtractor = linkExtractor;
             this.observer = observer;
             this.workerPool = workerPool;
+            this.crawlMode = CrawlMode.Crawl;
         }
 
-        public void Enqueue(Uri url)
+        public Crawler(WorkerPool workerPool, ICrawlerObserver observer, ISitemapLinkExtractor sitemapLinkExtractor, int maxWorkers = 3)
+        {
+            this.observer = observer;
+            this.workerPool = workerPool;
+            this.sitemapLinkExtractor = sitemapLinkExtractor;
+            this.crawlMode = CrawlMode.Sitemap;
+        }
+
+        public void SetEntryUrl(Uri url)
+        {
+            switch (this.crawlMode)
+            {
+                case CrawlMode.Crawl: Enqueue(url);
+                    break;
+                case CrawlMode.Sitemap:
+                    var links = this.sitemapLinkExtractor.ExtractLinks(url, this.httpClient).Result;
+                    foreach (var link in links)
+                    {
+                        Enqueue(link);
+                    }
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(crawlMode), this.crawlMode.ToString());
+            }
+        }
+
+        protected void Enqueue(Uri url)
         {
             this.workQueue.Add(new CrawlRequest(url));
             this.discoveredUrls.TryAdd(url, new CrawledUrlPropertiesImpl(url));
@@ -74,21 +103,24 @@ namespace Forte.SmokeTester
                     
                     if (response.IsSuccessStatusCode)
                     {
-                        var links = await this.linkExtractor.ExtractLinks(request, response.Content);
-                        foreach (var url in links)
+                        if (this.crawlMode == CrawlMode.Crawl)
                         {
-                            if (cancellationToken.IsCancellationRequested)
-                                break;
-
-                            if (this.ProcessExtractedUrl(request, url))
+                            var links = await this.linkExtractor.ExtractLinks(request, response.Content);
+                            foreach (var url in links)
                             {
-                                var crawlRequest = new CrawlRequest(url, request.Url, request.Depth + 1);
+                                if (cancellationToken.IsCancellationRequested)
+                                    break;
 
-                                if (this.crawlRequestFilter.ShouldCrawl(crawlRequest) == false)
-                                    continue;
+                                if (this.ProcessExtractedUrl(request, url))
+                                {
+                                    var crawlRequest = new CrawlRequest(url, request.Url, request.Depth + 1);
 
-                                this.workQueue.Add(crawlRequest, cancellationToken);                                    
-                            }
+                                    if (this.crawlRequestFilter.ShouldCrawl(crawlRequest) == false)
+                                        continue;
+
+                                    this.workQueue.Add(crawlRequest, cancellationToken);                                    
+                                }
+                            }                            
                         }
                     }
                     else
