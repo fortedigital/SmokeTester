@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using AngleSharp.Html;
 using AngleSharp.Parser.Html;
 
-namespace Forte.SmokeTester
+namespace Forte.SmokeTester.Extractor
 {
-    public class DefaultLinkExtractor : ILinkExtractor
+    public class HtmlLinkExtractor : ILinkExtractor
     {
         public async Task<IEnumerable<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content)
         {
