@@ -27,9 +27,13 @@ namespace Forte.SmokeTester
             
             var crawler = CreateCrwaler(opts, observer);
             crawler.Enqueue(new Uri(opts.StartUrl));
-            
-//            var rootPathUrl = new Uri(opts.StartUrl).GetComponents(UriComponents.HostAndPort, UriFormat.SafeUnescaped);            
-//            crawler.Enqueue(new Uri(new Uri(rootPathUrl), "/robots.txt"));
+
+            if (!opts.NoRobots)
+            {
+                var rootUrl = new Uri(opts.StartUrl).GetLeftPart(UriPartial.Authority);
+                var robotsTxtUrl = new Uri(new Uri(rootUrl), "/robots.txt");
+                crawler.Enqueue(robotsTxtUrl);                
+            }
             
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
@@ -48,7 +52,7 @@ namespace Forte.SmokeTester
         {
             var startUrl = new Uri(opts.StartUrl);
 
-            var linkExtractor = new CompositeExtractor(new HtmlLinkExtractor(), new SiteMapLinkExtractor());
+            var linkExtractor = new CompositeExtractor(new HtmlLinkExtractor(), new SiteMapLinkExtractor(), new RobotsTxtSitemapExtractor());
             var crawlRequestFilter = new CompositeFilter(
                 new AuthorityFilter(startUrl.Authority),
                 new MaxDepthFilter(opts.MaxDepth));
