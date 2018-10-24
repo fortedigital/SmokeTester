@@ -1,0 +1,33 @@
+{
+	"manifestVersion": 1,
+	"id": "SmokeTesterTask",
+	"version": "1.0.8",
+	"name": "Smoke Tester",
+	"description": "A VSTS Task that runs a smoke test",
+	"publisher": "forte-digital",
+	"targets": [
+		{
+			"id": "Microsoft.VisualStudio.Services"
+			}
+		],
+	"icons": {
+		"default": "icon.png"
+	 },
+	"contributions": [
+		{
+			"id": "SmokeTesterTask",
+			"type": "ms.vss-distributed-task.task",
+			"targets": [
+				"ms.vss-distributed-task.tasks"
+			],
+			"properties": {
+				"name": "buildtask"
+			}
+		}
+	],
+	"files":[
+		{
+			"path": "buildtask"			
+		}
+	]
+}
