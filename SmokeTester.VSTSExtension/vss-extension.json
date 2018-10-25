@@ -1,12 +1,12 @@
 {
 	"manifestVersion": 1,
 	"id": "SmokeTesterTask",
-	"version": "1.0.13",
+	"version": "1.0.14",
 	"name": "Smoke Tester",
 	"description": "A VSTS Task that runs a smoke test",
 	"publisher": "forte-digital",
 	"categories": [
-		"Pipelines"
+		"Build and release"
 	],
 	"targets": [
 		{
