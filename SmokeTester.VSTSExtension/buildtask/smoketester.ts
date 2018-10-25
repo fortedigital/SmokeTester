@@ -21,9 +21,10 @@ async function run() {
         const result = await dotnet.exec(<IExecOptions>{
             cwd: __dirname
         });
-        
+
         if (result > 0){
             tl.setResult(tl.TaskResult.Failed, "Smoke Test failed")
+            tl.error('Run failed');
         }
     } catch(err){
 		tl.setResult(tl.TaskResult.Failed, "Smoke Test failed")

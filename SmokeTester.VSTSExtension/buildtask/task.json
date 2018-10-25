@@ -16,7 +16,7 @@
     "version": {
         "Major": 1,
         "Minor": 0,
-        "Patch": 7
+        "Patch": 13
     },
     "instanceNameFormat": "Runs a smoke test",
     "groups": [

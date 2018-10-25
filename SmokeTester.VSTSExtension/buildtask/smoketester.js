@@ -26,15 +26,15 @@ function run() {
         dotnet.arg(tl.getInput("numberOfWorkers"));
         try {
             const result = yield dotnet.exec({
-                ignoreReturnCode: false,
-                failOnStdErr: true,
                 cwd: __dirname
             });
             if (result > 0) {
                 tl.setResult(tl.TaskResult.Failed, "Smoke Test failed");
+                tl.error('Run failed');
             }
         }
         catch (err) {
+            tl.setResult(tl.TaskResult.Failed, "Smoke Test failed");
             tl.error(err);
         }
     });
