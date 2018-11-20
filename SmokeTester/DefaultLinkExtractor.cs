@@ -22,7 +22,8 @@ namespace Forte.SmokeTester
 
                 return document.Links
                     .Select(l => l.GetAttribute(AttributeNames.Href))
-                    .Select(href => new Uri(crawlRequest.Url, new Uri(href, UriKind.RelativeOrAbsolute)));
+                    .Select(href => new Uri(crawlRequest.Url, new Uri(href, UriKind.RelativeOrAbsolute)))
+                    .Where(uri => uri.Scheme.Equals("mailto", StringComparison.OrdinalIgnoreCase) == false);
             }
         }
     }
