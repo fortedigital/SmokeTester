@@ -6,6 +6,9 @@
     <RootNamespace>Forte.SmokeTester</RootNamespace>
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="0.9.9.2" />
     <PackageReference Include="CommandLineParser" Version="2.2.1" />

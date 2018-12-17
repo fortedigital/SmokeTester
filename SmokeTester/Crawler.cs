@@ -16,17 +16,19 @@ namespace Forte.SmokeTester
         private readonly ILinkExtractor linkExtractor;
         private readonly ICrawlRequestFilter crawlRequestFilter;
         private readonly ICrawlerObserver observer;
+        private readonly IReadOnlyDictionary<string, string> customHttpHeaders;
 
         private readonly WorkerPool workerPool;
         private readonly HttpClient httpClient = new HttpClient();
         private readonly BlockingCollection<CrawlRequest> workQueue = new BlockingCollection<CrawlRequest>(new ConcurrentQueue<CrawlRequest>());
         private readonly ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl> discoveredUrls = new ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl>();
 
-        public Crawler(WorkerPool workerPool, ICrawlRequestFilter crawlRequestFilter, ILinkExtractor linkExtractor, ICrawlerObserver observer, int maxWorkers = 3)
+        public Crawler(WorkerPool workerPool, ICrawlRequestFilter crawlRequestFilter, ILinkExtractor linkExtractor, ICrawlerObserver observer, IReadOnlyDictionary<string, string> customHttpHeaders = null, int maxWorkers = 3)
         {
             this.crawlRequestFilter = crawlRequestFilter;
             this.linkExtractor = linkExtractor;
             this.observer = observer;
+            this.customHttpHeaders = customHttpHeaders ?? new Dictionary<string, string>();
             this.workerPool = workerPool;
         }
 
@@ -37,7 +39,7 @@ namespace Forte.SmokeTester
         }
 
         public async Task<IReadOnlyDictionary<Uri, CrawledUrlProperties>> Crawl(CancellationToken cancellationToken = default(CancellationToken))
-        {            
+        {
             await Task.Run(() =>
             {
                 try
@@ -46,7 +48,7 @@ namespace Forte.SmokeTester
                     {
                         if (this.workQueue.TryTake(out var request, 1000, cancellationToken) == false)
                             continue;
-                
+
                         this.workerPool.Run(async () =>
                         {
                             await this.Crawl(request, cancellationToken);
@@ -65,13 +67,26 @@ namespace Forte.SmokeTester
         private async Task Crawl(CrawlRequest request, CancellationToken cancellationToken)
         {
             this.observer.OnCrawling(request);
-            
+
             try
             {
-                using (var response = await this.httpClient.GetAsync(request.Url, cancellationToken))
+                var httpRequestMessage = new HttpRequestMessage
+                {
+                    RequestUri = request.Url,
+                    Method = HttpMethod.Get
+                };
+
+
+                foreach (var customHttpHeader in customHttpHeaders)
+                {
+                    httpRequestMessage.Headers.Add(customHttpHeader.Key,customHttpHeader.Value);
+                }
+                
+
+                using (var response = await this.httpClient.SendAsync(httpRequestMessage, cancellationToken))
                 {
                     this.discoveredUrls[request.Url].status = response.StatusCode;
-                    
+
                     if (response.IsSuccessStatusCode)
                     {
                         var links = await this.linkExtractor.ExtractLinks(request, response.Content);
@@ -87,7 +102,7 @@ namespace Forte.SmokeTester
                                 if (this.crawlRequestFilter.ShouldCrawl(crawlRequest) == false)
                                     continue;
 
-                                this.workQueue.Add(crawlRequest, cancellationToken);                                    
+                                this.workQueue.Add(crawlRequest, cancellationToken);
                             }
                         }
                     }
@@ -124,7 +139,7 @@ namespace Forte.SmokeTester
             }
 
             urlProperties.referers.TryAdd(request.Url, 0);
-            
+
             return newUrl;
         }
 
