@@ -24,6 +24,8 @@ function run() {
         dotnet.arg(tl.getInput("maxErrors"));
         dotnet.arg("-w");
         dotnet.arg(tl.getInput("numberOfWorkers"));
+        dotnet.arg("-h");
+        dotnet.arg(tl.getInput("httpHeaders"));
         try {
             const result = yield dotnet.exec({
                 cwd: __dirname

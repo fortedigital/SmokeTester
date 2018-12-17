@@ -66,6 +66,14 @@
             "defaultValue": 3,
             "required": false,
             "helpMarkDown": ""
+        },
+        {
+            "name": "httpHeaders",
+            "type": "multiLine",
+            "label": "Custom HTTP Headers",
+            "defaultValue": "",
+            "required": false,
+            "helpMarkDown": "Enter header_name:header_value in each line"
         }
     ],
     "execution": {
