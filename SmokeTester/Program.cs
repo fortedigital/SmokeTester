@@ -48,17 +48,12 @@ namespace Forte.SmokeTester
                 new AuthorityFilter(startUrl.Authority),
                 new MaxDepthFilter(opts.MaxDepth));
 
-            var customHttpHeaders = (opts.RequestHeaders ?? "")
-                .Split(new[] { '|', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => x.Trim().Split(':', 2))
-                .ToDictionary(x => x.ElementAt(0), x => x.ElementAtOrDefault(1));
-
             return new Crawler(
                 new WorkerPool(opts.NumberOfWorkers),
                 crawlRequestFilter,
                 linkExtractor,
                 observer,
-                customHttpHeaders);
+                opts.RequestHeaders);
         }
 
         private static void WriteSummary(IReadOnlyDictionary<Uri, CrawledUrlProperties> result, CrawlerObserver observer)
