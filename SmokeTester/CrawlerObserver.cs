@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
@@ -20,11 +19,11 @@ namespace Forte.SmokeTester
         
         private readonly int? maxErrors;
         private readonly int? maxUrls;
-        private readonly CancellationTokenSource cancelationTokenSource;
+        private readonly CancellationTokenSource cancellationTokenSource;
 
-        public CrawlerObserver(CancellationTokenSource cancelationTokenSource, int? maxErrors, int? maxUrls)
+        public CrawlerObserver(CancellationTokenSource cancellationTokenSource, int? maxErrors, int? maxUrls)
         {
-            this.cancelationTokenSource = cancelationTokenSource;
+            this.cancellationTokenSource = cancellationTokenSource;
             this.maxErrors = maxErrors;
             this.maxUrls = maxUrls;
         }
@@ -33,13 +32,13 @@ namespace Forte.SmokeTester
         {
             if (error.Exception != null)
             {
-                Console.WriteLine($"ERROR: {error.Exception.Message}: {error.Url}");
+                Console.WriteLine($"ERROR: {error.Exception.FlattenInnerMessages()}: '{error.Url}'");
                 
                 this.errors.Add(error);
             }
             else
             {
-                Console.WriteLine($"{error.Status}: {error.Url} (Referer: {error.Referer}");
+                Console.WriteLine($"{error.Status}: '{error.Url}' (Referrer: '{error.Referrer}')");
                 
                 if (error.Status == HttpStatusCode.NotFound)
                     this.warnings.Add(error);
@@ -48,7 +47,7 @@ namespace Forte.SmokeTester
             }
 
             if (this.maxErrors.HasValue && this.errors.Count >= this.maxErrors)
-                this.cancelationTokenSource.Cancel();
+                this.cancellationTokenSource.Cancel();
         }
 
         public void OnCrawling(CrawlRequest request)
@@ -58,7 +57,7 @@ namespace Forte.SmokeTester
             this.crawledUrls.Add(request.Url);
             
             if (this.maxUrls.HasValue && this.crawledUrls.Count >= this.maxUrls)
-                this.cancelationTokenSource.Cancel();
+                this.cancellationTokenSource.Cancel();
         }
 
         public void OnNewUrl(Uri url)

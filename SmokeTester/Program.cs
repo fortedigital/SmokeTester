@@ -1,7 +1,6 @@
 ﻿using CommandLine;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 
 namespace Forte.SmokeTester
@@ -65,7 +64,7 @@ namespace Forte.SmokeTester
                 Console.WriteLine("\nCrawl warnings:\n");
                 foreach (var error in observer.Warnings)
                 {
-                    Console.WriteLine($"{error.Status}: {error.Url}\nReferrers:\n  {string.Join("\n  ", result[error.Url].Referers)}\n");
+                    Console.WriteLine($"{error.Status}: {error.Url}\nReferrers:\n  {string.Join("\n  ", result[error.Url].Referrers)}\n");
                 }
             }
 
@@ -74,7 +73,7 @@ namespace Forte.SmokeTester
                 Console.WriteLine("\nCrawl errors:\n");
                 foreach (var error in observer.Errors)
                 {
-                    Console.WriteLine($"{error.Exception?.Message ?? error.Status.ToString()}: {error.Url}\nReferers:\n  {string.Join("\n  ", result[error.Url].Referers)}\n");
+                    Console.WriteLine($"{error.Exception?.FlattenInnerMessages() ?? error.Status.ToString()}: {error.Url}\nReferrers:\n  {string.Join("\n  ", result[error.Url].Referrers)}\n");
                 }
             }
         }

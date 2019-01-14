@@ -108,7 +108,7 @@ namespace Forte.SmokeTester
                     }
                     else
                     {
-                        this.observer.OnError(new CrawlError(request.Url, response.StatusCode, request.Referer));
+                        this.observer.OnError(new CrawlError(request.Url, response.StatusCode, request.Referrer));
                     }
                 }
             }
@@ -117,7 +117,7 @@ namespace Forte.SmokeTester
             }
             catch (Exception e)
             {
-                this.observer.OnError(new CrawlError(request.Url, e, request.Referer));
+                this.observer.OnError(new CrawlError(request.Url, e, request.Referrer));
             }
         }
 
@@ -138,7 +138,7 @@ namespace Forte.SmokeTester
                 }
             }
 
-            urlProperties.referers.TryAdd(request.Url, 0);
+            urlProperties.referrers.TryAdd(request.Url, 0);
 
             return newUrl;
         }
@@ -146,10 +146,10 @@ namespace Forte.SmokeTester
         private class CrawledUrlPropertiesImpl : CrawledUrlProperties
         {
             public override HttpStatusCode? Status => this.status;
-            public override IEnumerable<Uri> Referers => this.referers.Keys;
+            public override IEnumerable<Uri> Referrers => this.referrers.Keys;
 
             public HttpStatusCode? status;
-            public readonly ConcurrentDictionary<Uri, int> referers = new ConcurrentDictionary<Uri, int>();
+            public readonly ConcurrentDictionary<Uri, int> referrers = new ConcurrentDictionary<Uri, int>();
 
             public CrawledUrlPropertiesImpl(Uri url) : base(url)
             {
