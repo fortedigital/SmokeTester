@@ -9,7 +9,7 @@ namespace Forte.SmokeTester
     {
         public readonly Uri Url;
         public abstract HttpStatusCode? Status { get; }
-        public abstract IEnumerable<Uri> Referers { get; }
+        public abstract IEnumerable<Uri> Referrers { get; }
 
         protected CrawledUrlProperties(Uri url)
         {

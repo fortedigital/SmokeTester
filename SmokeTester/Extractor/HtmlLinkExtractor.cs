@@ -22,7 +22,20 @@ namespace Forte.SmokeTester.Extractor
 
                 return document.Links
                     .Select(l => l.GetAttribute(AttributeNames.Href))
-                    .Select(href => new Uri(crawlRequest.Url, new Uri(href, UriKind.RelativeOrAbsolute)));
+                    .Select(href => BuildUri(crawlRequest, href))
+                    .Where(uri => uri.Scheme.Equals("mailto", StringComparison.OrdinalIgnoreCase) == false);
+            }
+        }
+
+        private static Uri BuildUri(CrawlRequest crawlRequest, string href)
+        {
+            try
+            {
+                return new Uri(crawlRequest.Url, new Uri(href, UriKind.RelativeOrAbsolute));
+            }
+            catch (Exception e)
+            {
+                throw new FormatException($"Invalid URI format: '{href}'.", e);
             }
         }
     }
