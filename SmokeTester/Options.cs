@@ -7,7 +7,7 @@ namespace Forte.SmokeTester
 {
     internal class Options
     {
-        [Option('u', "url", Required = true, HelpText = "Start url where the crawling will begin.")]
+        [Option('u', "url", Required = true, HelpText = "Start url where the crawling will begin. You can pass sitemap url as well")]
         public string StartUrl { get; set; }
 
         [Option('d', "depth", Default = 3, HelpText = "Maximum depth of url to extract.")]
@@ -21,6 +21,9 @@ namespace Forte.SmokeTester
 
         [Option("maxUrls", Default = 1000, HelpText = "Number of urls after which the crawler is stopped.")]
         public int MaxUrls { get; set; }
+        
+        [Option("no-robots", HelpText = "Set this flag to disable parsing robots.txt in order to search for sitemaps")]
+        public bool NoRobots { get; set; }
 
         [Option('h', "headers", HelpText = "HTTP headers sent with request. Format: header_name:header_value|header_name2:header_value2.")]
         public string RequestHeadersRawValue { get; set; }

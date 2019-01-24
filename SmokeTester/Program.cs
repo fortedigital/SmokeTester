@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Forte.SmokeTester.Extractor;
 
 namespace Forte.SmokeTester
 {
@@ -25,6 +26,13 @@ namespace Forte.SmokeTester
             var crawler = CreateCrawler(opts, observer);
             crawler.Enqueue(new Uri(opts.StartUrl));
 
+            if (!opts.NoRobots)
+            {
+                var rootUrl = new Uri(opts.StartUrl).GetLeftPart(UriPartial.Authority);
+                var robotsTxtUrl = new Uri(new Uri(rootUrl), "/robots.txt");
+                crawler.Enqueue(robotsTxtUrl);                
+            }
+            
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
                 eventArgs.Cancel = true;
@@ -42,7 +50,7 @@ namespace Forte.SmokeTester
         {
             var startUrl = new Uri(opts.StartUrl);
 
-            var linkExtractor = new DefaultLinkExtractor();
+            var linkExtractor = new CompositeExtractor(new HtmlLinkExtractor(), new SiteMapLinkExtractor(), new RobotsTxtSitemapExtractor());
             var crawlRequestFilter = new CompositeFilter(
                 new AuthorityFilter(startUrl.Authority),
                 new MaxDepthFilter(opts.MaxDepth));
