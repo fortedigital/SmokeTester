@@ -10,6 +10,13 @@ namespace Forte.SmokeTester.Extractor
 {
     public class HtmlLinkExtractor : ILinkExtractor
     {
+        private static readonly IEnumerable<string> exludedSchemas = new[]
+        {
+            "mailto",
+            "tel",
+            "script"
+        };
+        
         public async Task<IEnumerable<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content)
         {
             if ("text/html".Equals(content.Headers.ContentType.MediaType, StringComparison.OrdinalIgnoreCase) == false)
@@ -23,7 +30,7 @@ namespace Forte.SmokeTester.Extractor
                 return document.Links
                     .Select(l => l.GetAttribute(AttributeNames.Href))
                     .Select(href => BuildUri(crawlRequest, href))
-                    .Where(uri => uri.Scheme.Equals("mailto", StringComparison.OrdinalIgnoreCase) == false);
+                    .Where(uri => exludedSchemas.Contains(uri.Scheme, StringComparer.OrdinalIgnoreCase) == false);
             }
         }
 
