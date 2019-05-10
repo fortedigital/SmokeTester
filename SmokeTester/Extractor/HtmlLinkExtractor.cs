@@ -16,11 +16,11 @@ namespace Forte.SmokeTester.Extractor
             "tel",
             "script"
         };
-        
-        public async Task<IEnumerable<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content)
+
+        public async Task<IReadOnlyCollection<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content)
         {
             if ("text/html".Equals(content.Headers.ContentType.MediaType, StringComparison.OrdinalIgnoreCase) == false)
-                return Enumerable.Empty<Uri>();
+                return new Uri[0];
 
             using (var contentStream = await content.ReadAsStreamAsync())
             {
@@ -30,7 +30,8 @@ namespace Forte.SmokeTester.Extractor
                 return document.Links
                     .Select(l => l.GetAttribute(AttributeNames.Href))
                     .Select(href => BuildUri(crawlRequest, href))
-                    .Where(uri => exludedSchemas.Contains(uri.Scheme, StringComparer.OrdinalIgnoreCase) == false);
+                    .Where(uri => exludedSchemas.Contains(uri.Scheme, StringComparer.OrdinalIgnoreCase) == false)
+                    .ToList();
             }
         }
 

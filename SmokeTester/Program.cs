@@ -1,6 +1,7 @@
 ﻿using CommandLine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Forte.SmokeTester.Extractor;
 
@@ -24,15 +25,16 @@ namespace Forte.SmokeTester
                 opts.MaxUrls);
 
             var crawler = CreateCrawler(opts, observer);
-            crawler.Enqueue(new Uri(opts.StartUrl));
+            crawler.Enqueue(opts.StartUrls.Select(x => new Uri(x)));
 
-            if (!opts.NoRobots)
+            var parseRobots = opts.NoRobots == false;
+            if (parseRobots)
             {
-                var rootUrl = new Uri(opts.StartUrl).GetLeftPart(UriPartial.Authority);
-                var robotsTxtUrl = new Uri(new Uri(rootUrl), "/robots.txt");
-                crawler.Enqueue(robotsTxtUrl);                
+                var rootUrls = opts.StartUrls.Select(x => new Uri(x).GetLeftPart(UriPartial.Authority));
+                var robotsTxtUrls = rootUrls.Select(x => new Uri(new Uri(x), "/robots.txt")).Distinct();
+                crawler.Enqueue(robotsTxtUrls);
             }
-            
+
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
                 eventArgs.Cancel = true;
@@ -48,11 +50,11 @@ namespace Forte.SmokeTester
 
         private static Crawler CreateCrawler(Options opts, ICrawlerObserver observer)
         {
-            var startUrl = new Uri(opts.StartUrl);
+            var startUrlAuthorities = opts.StartUrls.Select(x => new Uri(x).Authority);
 
             var linkExtractor = new CompositeExtractor(new HtmlLinkExtractor(), new SiteMapLinkExtractor(), new RobotsTxtSitemapExtractor());
             var crawlRequestFilter = new CompositeFilter(
-                new AuthorityFilter(startUrl.Authority),
+                new AuthorityFilter(startUrlAuthorities),
                 new MaxDepthFilter(opts.MaxDepth));
 
             return new Crawler(

@@ -7,6 +7,6 @@ namespace Forte.SmokeTester.Extractor
 {
     public interface ILinkExtractor
     {
-        Task<IEnumerable<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content);
+        Task<IReadOnlyCollection<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content);
     }
 }
