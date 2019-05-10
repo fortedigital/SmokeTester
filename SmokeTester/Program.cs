@@ -27,13 +27,14 @@ namespace Forte.SmokeTester
             var crawler = CreateCrawler(opts, observer);
             crawler.Enqueue(opts.StartUrls.Select(x => new Uri(x)));
 
-            if (!opts.NoRobots)
+            var parseRobots = opts.NoRobots == false;
+            if (parseRobots)
             {
-                var rootUrl = new Uri(opts.StartUrl).GetLeftPart(UriPartial.Authority);
-                var robotsTxtUrl = new Uri(new Uri(rootUrl), "/robots.txt");
-                crawler.Enqueue(robotsTxtUrl);                
+                var rootUrls = opts.StartUrls.Select(x => new Uri(x).GetLeftPart(UriPartial.Authority));
+                var robotsTxtUrls = rootUrls.Select(x => new Uri(new Uri(x), "/robots.txt")).Distinct();
+                crawler.Enqueue(robotsTxtUrls);
             }
-            
+
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
                 eventArgs.Cancel = true;

@@ -14,10 +14,10 @@ namespace Forte.SmokeTester.Extractor
             this.extractors = extractors;
         }
 
-        public async Task<IEnumerable<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content)
+        public async Task<IReadOnlyCollection<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content)
         {
             var result = new List<Uri>();
-            foreach (var extractor in extractors)
+            foreach (var extractor in this.extractors)
             {
                 result.AddRange(await extractor.ExtractLinks(crawlRequest, content));
 
