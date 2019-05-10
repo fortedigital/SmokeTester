@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Forte.SmokeTester
+namespace Forte.SmokeTester.Extractor
 {
     public interface ILinkExtractor
     {

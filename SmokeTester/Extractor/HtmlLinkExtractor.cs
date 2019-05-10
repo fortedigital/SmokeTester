@@ -9,11 +9,18 @@ using System.Xml.XPath;
 using AngleSharp.Html;
 using AngleSharp.Parser.Html;
 
-namespace Forte.SmokeTester
+namespace Forte.SmokeTester.Extractor
 {
-    public class DefaultLinkExtractor : ILinkExtractor
+    public class HtmlLinkExtractor : ILinkExtractor
     {
-        public async Task<IReadOnlyCollection<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content)
+        private static readonly IEnumerable<string> exludedSchemas = new[]
+        {
+            "mailto",
+            "tel",
+            "script"
+        };
+        
+        public async Task<IEnumerable<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content)
         {
             var mediaType = content.Headers.ContentType.MediaType;
 
@@ -24,12 +31,10 @@ namespace Forte.SmokeTester
                 {
                     var parser = new HtmlParser();
                     var document = await parser.ParseAsync(contentStream);
-
                     return document.Links
                         .Select(l => l.GetAttribute(AttributeNames.Href))
                         .Select(href => BuildUri(crawlRequest, href))
-                        .Where(uri => uri.Scheme.Equals("mailto", StringComparison.OrdinalIgnoreCase) == false)
-                        .ToList();
+                        .Where(uri => exludedSchemas.Contains(uri.Scheme, StringComparer.OrdinalIgnoreCase) == false);
                 }
             }
 
@@ -48,6 +53,7 @@ namespace Forte.SmokeTester
                         .Select(x => BuildUri(crawlRequest, x))
                         .ToList();
                 }
+                
             }
 
             return new Uri[0];
