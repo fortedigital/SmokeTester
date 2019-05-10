@@ -23,7 +23,7 @@ namespace Forte.SmokeTester
         private readonly BlockingCollection<CrawlRequest> workQueue = new BlockingCollection<CrawlRequest>(new ConcurrentQueue<CrawlRequest>());
         private readonly ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl> discoveredUrls = new ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl>();
 
-        public Crawler(WorkerPool workerPool, ICrawlRequestFilter crawlRequestFilter, ILinkExtractor linkExtractor, ICrawlerObserver observer, IReadOnlyDictionary<string, string> customHttpHeaders = null, int maxWorkers = 3)
+        public Crawler(WorkerPool workerPool, ICrawlRequestFilter crawlRequestFilter, ILinkExtractor linkExtractor, ICrawlerObserver observer, IReadOnlyDictionary<string, string> customHttpHeaders = null)
         {
             this.crawlRequestFilter = crawlRequestFilter;
             this.linkExtractor = linkExtractor;
@@ -38,7 +38,15 @@ namespace Forte.SmokeTester
             this.discoveredUrls.TryAdd(url, new CrawledUrlPropertiesImpl(url));
         }
 
-        public async Task<IReadOnlyDictionary<Uri, CrawledUrlProperties>> Crawl(CancellationToken cancellationToken = default(CancellationToken))
+        public void Enqueue(IEnumerable<Uri> urls)
+        {
+            foreach (var url in urls)
+            {
+                this.Enqueue(url);
+            }
+        }
+
+        public async Task<IReadOnlyDictionary<Uri, CrawledUrlProperties>> Crawl(CancellationToken cancellationToken = default)
         {
             await Task.Run(() =>
             {
@@ -59,7 +67,7 @@ namespace Forte.SmokeTester
                 catch (TaskCanceledException)
                 {
                 }
-            });
+            }, cancellationToken);
 
             return this.discoveredUrls.ToDictionary(kvp => kvp.Key, kvp => (CrawledUrlProperties)kvp.Value);
         }
@@ -77,11 +85,11 @@ namespace Forte.SmokeTester
                 };
 
 
-                foreach (var customHttpHeader in customHttpHeaders)
+                foreach (var customHttpHeader in this.customHttpHeaders)
                 {
-                    httpRequestMessage.Headers.Add(customHttpHeader.Key,customHttpHeader.Value);
+                    httpRequestMessage.Headers.Add(customHttpHeader.Key, customHttpHeader.Value);
                 }
-                
+
 
                 using (var response = await this.httpClient.SendAsync(httpRequestMessage, cancellationToken))
                 {

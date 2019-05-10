@@ -52,7 +52,7 @@ namespace Forte.SmokeTester
 
         public void OnCrawling(CrawlRequest request)
         {
-            Console.WriteLine(request.Url);
+            Console.WriteLine($"CRAWLING: {request.Url}");
 
             this.crawledUrls.Add(request.Url);
             

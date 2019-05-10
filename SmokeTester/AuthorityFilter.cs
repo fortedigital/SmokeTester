@@ -1,19 +1,27 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Forte.SmokeTester
 {
     public class AuthorityFilter : ICrawlRequestFilter
     {
-        private readonly string authority;
+        private readonly IReadOnlyCollection<string> authorities;
 
-        public AuthorityFilter(string authority)
+        public AuthorityFilter(IEnumerable<string> authorities)
         {
-            this.authority = authority;
+            this.authorities = authorities.Distinct().ToList();
+
+            if (this.authorities.Count == 0)
+            {
+                throw new ArgumentException("Expected at least authority but found 0",nameof(authorities));
+            }
         }
 
         public bool ShouldCrawl(CrawlRequest request)
         {
-            return this.authority.Equals(request.Url.Authority, StringComparison.OrdinalIgnoreCase);
+            return this.authorities.Any(x=>x.Equals(request.Url.Authority, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

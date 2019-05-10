@@ -1,6 +1,7 @@
 ﻿using CommandLine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace Forte.SmokeTester
@@ -23,7 +24,7 @@ namespace Forte.SmokeTester
                 opts.MaxUrls);
 
             var crawler = CreateCrawler(opts, observer);
-            crawler.Enqueue(new Uri(opts.StartUrl));
+            crawler.Enqueue(opts.StartUrls.Select(x => new Uri(x)));
 
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
@@ -40,11 +41,11 @@ namespace Forte.SmokeTester
 
         private static Crawler CreateCrawler(Options opts, ICrawlerObserver observer)
         {
-            var startUrl = new Uri(opts.StartUrl);
+            var startUrlAuthorities = opts.StartUrls.Select(x => new Uri(x).Authority);
 
             var linkExtractor = new DefaultLinkExtractor();
             var crawlRequestFilter = new CompositeFilter(
-                new AuthorityFilter(startUrl.Authority),
+                new AuthorityFilter(startUrlAuthorities),
                 new MaxDepthFilter(opts.MaxDepth));
 
             return new Crawler(

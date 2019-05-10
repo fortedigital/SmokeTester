@@ -7,8 +7,8 @@ namespace Forte.SmokeTester
 {
     internal class Options
     {
-        [Option('u', "url", Required = true, HelpText = "Start url where the crawling will begin.")]
-        public string StartUrl { get; set; }
+        [Option('u', "url", Required = true, HelpText = "Start url where the crawling will begin. For multiple urls separate with '|' e.g. https://bbc.co.uk|https://msn.com")]
+        public IEnumerable<string> StartUrls { get; set; }
 
         [Option('d', "depth", Default = 3, HelpText = "Maximum depth of url to extract.")]
         public int MaxDepth { get; set; }
