@@ -1,17 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 
 namespace Forte.SmokeTester
 {
     public class CrawlResult
     {
-        public readonly IReadOnlyDictionary<Uri, IReadOnlyCollection<Uri>> DiscoveredUrls;
-        public readonly int CrawledUrlsCount;
+        public Uri Url { get; }
+        public HttpStatusCode Status { get; }
+        public Uri Referrer { get; }
+        public TimeSpan RequestDuration { get; }
 
-        public CrawlResult(int crawledUrlsCount, IReadOnlyDictionary<Uri, IReadOnlyCollection<Uri>> discoveredUrls)
+        public CrawlResult(Uri url, HttpStatusCode status, Uri referrer, TimeSpan requestDuration)
         {
-            this.DiscoveredUrls = discoveredUrls;
-            this.CrawledUrlsCount = crawledUrlsCount;
+            this.Url = url;
+            this.Status = status;
+            this.Referrer = referrer;
+            this.RequestDuration = requestDuration;
         }
     }
 }

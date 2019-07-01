@@ -19,9 +19,15 @@ namespace Forte.SmokeTester
         [Option('w', "workers", Default = 3, HelpText = "Number of workers.")]
         public int NumberOfWorkers { get; set; }
 
+        [Option('t', "timeout", Default = null, HelpText = "Request timeout in seconds.")]
+        public int? RequestTimeout { get; set; }
+
         [Option("maxUrls", Default = 1000, HelpText = "Number of urls after which the crawler is stopped.")]
         public int MaxUrls { get; set; }
-        
+
+        [Option("minUrls", Default = 1, HelpText = "Minimum number of urls that is expected.")]
+        public int MinUrls { get; set; }
+
         [Option("no-robots", HelpText = "Set this flag to disable parsing robots.txt in order to search for sitemaps")]
         public bool NoRobots { get; set; }
 

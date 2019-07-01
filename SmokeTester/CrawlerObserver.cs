@@ -16,7 +16,7 @@ namespace Forte.SmokeTester
 
         private readonly ConcurrentBag<CrawlError> errors = new ConcurrentBag<CrawlError>();
         public IReadOnlyCollection<CrawlError> Errors => this.errors;
-        
+
         private readonly int? maxErrors;
         private readonly int? maxUrls;
         private readonly CancellationTokenSource cancellationTokenSource;
@@ -33,13 +33,13 @@ namespace Forte.SmokeTester
             if (error.Exception != null)
             {
                 Console.WriteLine($"ERROR: {error.Exception.FlattenInnerMessages()}: '{error.Url}'");
-                
+
                 this.errors.Add(error);
             }
             else
             {
                 Console.WriteLine($"{error.Status}: '{error.Url}' (Referrer: '{error.Referrer}')");
-                
+
                 if (error.Status == HttpStatusCode.NotFound)
                     this.warnings.Add(error);
                 else
@@ -55,13 +55,18 @@ namespace Forte.SmokeTester
             Console.WriteLine($"CRAWLING: {request.Url}");
 
             this.crawledUrls.Add(request.Url);
-            
+
             if (this.maxUrls.HasValue && this.crawledUrls.Count >= this.maxUrls)
                 this.cancellationTokenSource.Cancel();
         }
 
         public void OnNewUrl(Uri url)
         {
+        }
+
+        public void OnCrawled(CrawlResult result)
+        {
+            Console.WriteLine($"OK: {result.Url} [{Math.Round(result.RequestDuration.TotalMilliseconds)}ms]");
         }
     }
 }

@@ -7,5 +7,6 @@ namespace Forte.SmokeTester
         void OnError(CrawlError error);
         void OnCrawling(CrawlRequest request);
         void OnNewUrl(Uri url);
+        void OnCrawled(CrawlResult result);
     }
 }

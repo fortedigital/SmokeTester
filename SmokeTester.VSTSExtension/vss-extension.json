@@ -3,7 +3,7 @@
 	"id": "SmokeTesterTask",
 	"version": "1.0.14",
 	"name": "Smoke Tester",
-	"description": "A VSTS Task that runs a smoke test",
+	"description": "Task that crawls website looking for HTTP errors",
 	"publisher": "forte-digital",
 	"categories": [
 		"Build and release"

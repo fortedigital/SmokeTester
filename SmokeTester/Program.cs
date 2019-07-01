@@ -45,6 +45,13 @@ namespace Forte.SmokeTester
 
             WriteSummary(result, observer);
 
+            var crawledUrlsCount = observer.CrawledUrls.Count;
+            if (crawledUrlsCount < opts.MinUrls)
+            {
+                Console.WriteLine($"\nExpected at least {opts.MinUrls} urls but crawled only {crawledUrlsCount}.");
+                return 2;
+            }
+
             return observer.Errors.Count > 0 ? 1 : 0;
         }
 
@@ -57,12 +64,17 @@ namespace Forte.SmokeTester
                 new AuthorityFilter(startUrlAuthorities),
                 new MaxDepthFilter(opts.MaxDepth));
 
+            var requestTimeout = opts.RequestTimeout != null
+                ? (TimeSpan?)TimeSpan.FromSeconds(opts.RequestTimeout.Value)
+                : null;
+
             return new Crawler(
                 new WorkerPool(opts.NumberOfWorkers),
                 crawlRequestFilter,
                 linkExtractor,
                 observer,
-                opts.RequestHeaders);
+                opts.RequestHeaders,
+                requestTimeout);
         }
 
         private static void WriteSummary(IReadOnlyDictionary<Uri, CrawledUrlProperties> result, CrawlerObserver observer)

@@ -43,6 +43,14 @@
             "required": false,
             "helpMarkDown": ""
         },
+		{
+            "name": "minUrls",
+            "type": "number",
+            "label": "Min Urls",
+            "defaultValue": 0,
+            "required": false,
+            "helpMarkDown": "Minimum expected number of urls to crawl"
+        },
         {
             "name": "maxUrls",
             "type": "number",
@@ -64,6 +72,14 @@
             "type": "number",
             "label": "Number of Workers",
             "defaultValue": 3,
+            "required": false,
+            "helpMarkDown": ""
+        },
+		{
+            "name": "requestTimeout",
+            "type": "number",
+            "label": "Request Timeout",
+            "defaultValue": 0,
             "required": false,
             "helpMarkDown": ""
         },
