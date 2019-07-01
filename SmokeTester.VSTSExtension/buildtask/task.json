@@ -78,8 +78,8 @@
 		{
             "name": "requestTimeout",
             "type": "number",
-            "label": "Request Timeout",
-            "defaultValue": 0,
+            "label": "Request Timeout (seconds)",
+            "defaultValue": 100,
             "required": false,
             "helpMarkDown": ""
         },
