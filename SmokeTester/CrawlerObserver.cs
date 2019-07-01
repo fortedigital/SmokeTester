@@ -53,11 +53,6 @@ namespace Forte.SmokeTester
         public void OnCrawling(CrawlRequest request)
         {
             Console.WriteLine($"CRAWLING: {request.Url}");
-
-            this.crawledUrls.Add(request.Url);
-
-            if (this.maxUrls.HasValue && this.crawledUrls.Count >= this.maxUrls)
-                this.cancellationTokenSource.Cancel();
         }
 
         public void OnNewUrl(Uri url)
@@ -66,6 +61,11 @@ namespace Forte.SmokeTester
 
         public void OnCrawled(CrawlResult result)
         {
+            this.crawledUrls.Add(result.Url);
+
+            if (this.maxUrls.HasValue && this.crawledUrls.Count >= this.maxUrls)
+                this.cancellationTokenSource.Cancel();
+
             Console.WriteLine($"OK: {result.Url} [{Math.Round(result.RequestDuration.TotalMilliseconds)}ms]");
         }
     }
