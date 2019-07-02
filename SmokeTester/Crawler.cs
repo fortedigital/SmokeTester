@@ -18,6 +18,7 @@ namespace Forte.SmokeTester
         private readonly ILinkExtractor linkExtractor;
         private readonly ICrawlRequestFilter crawlRequestFilter;
         private readonly ICrawlerObserver observer;
+        private readonly int maxRetries;
         private readonly IReadOnlyDictionary<string, string> customHttpHeaders;
 
         private readonly WorkerPool workerPool;
@@ -26,11 +27,14 @@ namespace Forte.SmokeTester
         private readonly ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl> discoveredUrls = new ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl>();
 
         public Crawler(WorkerPool workerPool, ICrawlRequestFilter crawlRequestFilter, ILinkExtractor linkExtractor, ICrawlerObserver observer,
-            IReadOnlyDictionary<string, string> customHttpHeaders = null, TimeSpan? requestTimeout = null)
+            IReadOnlyDictionary<string, string> customHttpHeaders = null, TimeSpan? requestTimeout = null, int maxRetries = 0)
         {
+            if (this.maxRetries < 0) throw new ArgumentOutOfRangeException(nameof(maxRetries), "Max retries must be non-negative");
+
             this.crawlRequestFilter = crawlRequestFilter;
             this.linkExtractor = linkExtractor;
             this.observer = observer;
+            this.maxRetries = maxRetries;
             this.customHttpHeaders = customHttpHeaders ?? new Dictionary<string, string>();
             this.workerPool = workerPool;
 
@@ -67,7 +71,7 @@ namespace Forte.SmokeTester
 
                         this.workerPool.Run(async () =>
                         {
-                            await this.Crawl(request, cancellationToken);
+                            await this.CrawlWithRetires(request, cancellationToken);
                         });
                     }
 
@@ -80,7 +84,25 @@ namespace Forte.SmokeTester
             return this.discoveredUrls.ToDictionary(kvp => kvp.Key, kvp => (CrawledUrlProperties)kvp.Value);
         }
 
-        private async Task Crawl(CrawlRequest request, CancellationToken cancellationToken)
+        private async Task CrawlWithRetires(CrawlRequest request, CancellationToken cancellationToken)
+        {
+
+            for(var tryNo=0;tryNo<=this.maxRetries;tryNo++)
+            {
+                var isLastTry = tryNo == this.maxRetries;
+
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                var success = await this.Crawl(request, cancellationToken, isLastTry);
+                if (success)
+                {
+                    return;
+                }
+            }
+        }
+
+        private async Task<bool> Crawl(CrawlRequest request, CancellationToken cancellationToken, bool isLastTry)
         {
             this.observer.OnCrawling(request);
 
@@ -102,8 +124,6 @@ namespace Forte.SmokeTester
                 using (var response = await this.httpClient.SendAsync(httpRequestMessage, cancellationToken))
                 {
                     this.discoveredUrls[request.Url].status = response.StatusCode;
-
-
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -127,12 +147,18 @@ namespace Forte.SmokeTester
                                 this.workQueue.Add(crawlRequest, cancellationToken);
                             }
                         }
+
+                        return true;
+
                     }
                     else
                     {
-                        this.observer.OnError(new CrawlError(request.Url, response.StatusCode, request.Referrer));
+                        var crawlError = new CrawlError(request.Url, response.StatusCode, request.Referrer);
+                        this.ReportError(isLastTry, crawlError);
+                        return false;
                     }
                 }
+
             }
             catch (OperationCanceledException ex)
             {
@@ -142,14 +168,30 @@ namespace Forte.SmokeTester
                     // https://github.com/dotnet/corefx/issues/20296
 
                     var exception = new OperationCanceledException($"Task canceled for {request.Url} (timeout?).", ex);
-                    this.observer.OnError(new CrawlError(request.Url, exception, request.Referrer));
+                    var crawlError = new CrawlError(request.Url, exception, request.Referrer);
+                    this.ReportError(isLastTry, crawlError);
                 }
 
                 // otherwise it means request to stop processing new urls
+                return false;
             }
             catch (Exception e)
             {
-                this.observer.OnError(new CrawlError(request.Url, e, request.Referrer));
+                var crawlError = new CrawlError(request.Url, e, request.Referrer);
+                this.ReportError(isLastTry, crawlError);
+                return false;
+            }
+        }
+
+        private void ReportError(bool isLastTry, CrawlError crawlError)
+        {
+            if (isLastTry)
+            {
+                this.observer.OnError(crawlError);
+            }
+            else
+            {
+                this.observer.OnRetrying(crawlError);
             }
         }
 

@@ -28,6 +28,13 @@ namespace Forte.SmokeTester
             this.maxUrls = maxUrls;
         }
 
+        public void OnRetrying(CrawlError error)
+        {
+            Console.WriteLine(error.Exception != null
+                ? $"RETRYING: '{error.Url}' : {error.Exception.FlattenInnerMessages()}: "
+                : $"RETRYING: '{error.Url}' : {error.Status}:  (Referrer: '{error.Referrer}')");
+        }
+
         public void OnError(CrawlError error)
         {
             if (error.Exception != null)

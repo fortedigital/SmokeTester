@@ -74,7 +74,8 @@ namespace Forte.SmokeTester
                 linkExtractor,
                 observer,
                 opts.RequestHeaders,
-                requestTimeout);
+                requestTimeout,
+                opts.MaxRetries);
         }
 
         private static void WriteSummary(IReadOnlyDictionary<Uri, CrawledUrlProperties> result, CrawlerObserver observer)

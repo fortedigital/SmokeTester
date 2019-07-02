@@ -28,6 +28,9 @@ namespace Forte.SmokeTester
         [Option("minUrls", Default = 1, HelpText = "Minimum number of urls that is expected.")]
         public int MinUrls { get; set; }
 
+        [Option('r',"retries", Default = 0, HelpText = "Maximum number of retries (use '0' for no retry).")]
+        public int MaxRetries { get; set; }
+
         [Option("no-robots", HelpText = "Set this flag to disable parsing robots.txt in order to search for sitemaps")]
         public bool NoRobots { get; set; }
 
