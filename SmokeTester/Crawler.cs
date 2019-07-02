@@ -141,7 +141,8 @@ namespace Forte.SmokeTester
                     // it means timeout but there is no easy way to find it out
                     // https://github.com/dotnet/corefx/issues/20296
 
-                    throw new TaskCanceledException($"Task canceled for {request.Url}. (timeout?)", ex);
+                    var exception = new TaskCanceledException($"Task canceled for {request.Url} (timeout?).", ex);
+                    this.observer.OnError(new CrawlError(request.Url, exception, request.Referrer));
                 }
 
                 // otherwise it means request to stop processing new urls
