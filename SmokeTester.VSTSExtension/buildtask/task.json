@@ -83,6 +83,14 @@
             "required": false,
             "helpMarkDown": ""
         },
+		{
+            "name": "retries",
+            "type": "number",
+            "label": "Number of retries",
+            "defaultValue": 0,
+            "required": false,
+            "helpMarkDown": "0 = no retry"
+        },
         {
             "name": "httpHeaders",
             "type": "multiLine",

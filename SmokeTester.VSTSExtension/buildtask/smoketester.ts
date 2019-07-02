@@ -16,6 +16,8 @@ async function run() {
     dotnet.arg(tl.getInput("maxErrors"));
     dotnet.arg("-w");
     dotnet.arg(tl.getInput("numberOfWorkers"));
+	dotnet.arg("-r");
+    dotnet.arg(tl.getInput("retries"));
 		
     if (tl.getInput("httpHeaders")) {
         dotnet.arg("-h");
