@@ -66,7 +66,7 @@ namespace Forte.SmokeTester
             if (this.maxUrls.HasValue && this.crawledUrls.Count >= this.maxUrls)
                 this.cancellationTokenSource.Cancel();
 
-            Console.WriteLine($"OK: {result.Url} [{Math.Round(result.RequestDuration.TotalMilliseconds)}ms]");
+            Console.WriteLine($"OK: {result.Url} [{Math.Round(result.RequestDuration.TotalMilliseconds)} ms]");
         }
     }
 }

@@ -72,7 +72,7 @@ namespace Forte.SmokeTester
                     }
 
                 }
-                catch (TaskCanceledException)
+                catch (OperationCanceledException)
                 {
                 }
             }, cancellationToken);
@@ -134,14 +134,14 @@ namespace Forte.SmokeTester
                     }
                 }
             }
-            catch (TaskCanceledException ex)
+            catch (OperationCanceledException ex)
             {
                 if (cancellationToken.IsCancellationRequested == false)
                 {
                     // it means timeout but there is no easy way to find it out
                     // https://github.com/dotnet/corefx/issues/20296
 
-                    var exception = new TaskCanceledException($"Task canceled for {request.Url} (timeout?).", ex);
+                    var exception = new OperationCanceledException($"Task canceled for {request.Url} (timeout?).", ex);
                     this.observer.OnError(new CrawlError(request.Url, exception, request.Referrer));
                 }
 
