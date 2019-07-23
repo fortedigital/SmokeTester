@@ -87,7 +87,7 @@ namespace Forte.SmokeTester
         private async Task CrawlWithRetires(CrawlRequest request, CancellationToken cancellationToken)
         {
 
-            for(var tryNo=0;tryNo<=this.maxRetries;tryNo++)
+            for (var tryNo = 0; tryNo <= this.maxRetries; tryNo++)
             {
                 var isLastTry = tryNo == this.maxRetries;
 
@@ -106,6 +106,7 @@ namespace Forte.SmokeTester
         {
             this.observer.OnCrawling(request);
 
+            var requestStopWatch = Stopwatch.StartNew();
             try
             {
                 var httpRequestMessage = new HttpRequestMessage
@@ -119,16 +120,14 @@ namespace Forte.SmokeTester
                 {
                     httpRequestMessage.Headers.Add(customHttpHeader.Key, customHttpHeader.Value);
                 }
-
-                var requestStopWatch = Stopwatch.StartNew();
+                
                 using (var response = await this.httpClient.SendAsync(httpRequestMessage, cancellationToken))
                 {
                     this.discoveredUrls[request.Url].status = response.StatusCode;
 
                     if (response.IsSuccessStatusCode)
                     {
-                        this.observer.OnCrawled(new CrawlResult(request.Url, response.StatusCode, request.Referrer,
-                            requestStopWatch.Elapsed));
+                        this.observer.OnCrawled(new CrawlResult(request.Url, response.StatusCode, request.Referrer, requestStopWatch.Elapsed));
 
                         var links = await this.linkExtractor.ExtractLinks(request, response.Content);
                         foreach (var url in links)
@@ -167,7 +166,7 @@ namespace Forte.SmokeTester
                     // it means timeout but there is no easy way to find it out
                     // https://github.com/dotnet/corefx/issues/20296
 
-                    var exception = new OperationCanceledException($"Task canceled for {request.Url} (timeout?).", ex);
+                    var exception = new OperationCanceledException($"Task canceled for {request.Url} after {requestStopWatch.Elapsed} (timeout?).", ex);
                     var crawlError = new CrawlError(request.Url, exception, request.Referrer);
                     this.ReportError(isLastTry, crawlError);
                 }
