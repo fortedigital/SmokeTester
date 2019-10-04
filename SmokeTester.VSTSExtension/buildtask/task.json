@@ -33,7 +33,7 @@
             "label": "Start URL",
             "defaultValue": "",
             "required": true,
-            "helpMarkDown": "Enter a start url used to bootstrap the crawler"
+            "helpMarkDown": "Enter a start url used to bootstrap the crawler (use single space as a separator if you want to pass more than one value)"
         },
         {
             "name": "maxDepth",

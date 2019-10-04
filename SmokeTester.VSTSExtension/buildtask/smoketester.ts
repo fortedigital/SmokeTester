@@ -7,7 +7,7 @@ async function run() {
     
     dotnet.arg("Forte.SmokeTester.dll");
     dotnet.arg("-u");
-    dotnet.arg(tl.getInput("startUrl"));
+    dotnet.arg(tl.getInput("startUrl").split(" "));
     dotnet.arg("-d");
     dotnet.arg(tl.getInput("maxDepth"));
     dotnet.arg("--maxUrls");
