@@ -31,6 +31,8 @@ namespace Forte.SmokeTester.Extractor
                     .Select(l => l.GetAttribute(AttributeNames.Href))
                     .Select(href => BuildUri(crawlRequest, href))
                     .Where(uri => exludedSchemas.Contains(uri.Scheme, StringComparer.OrdinalIgnoreCase) == false)
+                    .Select(this.RemoveFragment)
+                    .Distinct()
                     .ToList();
             }
         }
@@ -45,6 +47,16 @@ namespace Forte.SmokeTester.Extractor
             {
                 throw new FormatException($"Invalid URI format: '{href}'.", e);
             }
+        }
+
+        private Uri RemoveFragment(Uri uri)
+        {
+            if (string.IsNullOrEmpty(uri.Fragment))
+            {
+                return uri;
+            }
+
+            return new Uri( uri.GetLeftPart(UriPartial.Query),UriKind.RelativeOrAbsolute);
         }
     }
 }
