@@ -43,8 +43,8 @@ namespace Forte.SmokeTester
 
             var result = crawler.Crawl(cancellationTokenSource.Token).Result;
 
-            WriteSummary(result, observer);
-
+            WriteSummary(result, observer, opts.FullSummary);
+            
             var crawledUrlsCount = observer.CrawledUrls.Count;
             if (crawledUrlsCount < opts.MinUrls)
             {
@@ -61,7 +61,7 @@ namespace Forte.SmokeTester
 
             var linkExtractor = new CompositeExtractor(new HtmlLinkExtractor(), new SiteMapLinkExtractor(), new RobotsTxtSitemapExtractor());
             var crawlRequestFilter = new CompositeFilter(
-                new AuthorityFilter(startUrlAuthorities),
+                new AuthorityFilter(startUrlAuthorities, opts.TestExternalUrls),
                 new MaxDepthFilter(opts.MaxDepth));
 
             var requestTimeout = opts.RequestTimeout != null
@@ -75,10 +75,11 @@ namespace Forte.SmokeTester
                 observer,
                 opts.RequestHeaders,
                 requestTimeout,
-                opts.MaxRetries);
+                opts.MaxRetries,
+                opts.UserAgent);
         }
 
-        private static void WriteSummary(IReadOnlyDictionary<Uri, CrawledUrlProperties> result, CrawlerObserver observer)
+        private static void WriteSummary(IReadOnlyDictionary<Uri, CrawledUrlProperties> result, CrawlerObserver observer, bool fullSummary)
         {
             Console.WriteLine($"\nDiscovered urls: {result.Count}\nCrawled urls: {observer.CrawledUrls.Count}\nCrawl warnings: {observer.Warnings.Count}\nCrawl errors: {observer.Errors.Count}");
 
@@ -97,6 +98,16 @@ namespace Forte.SmokeTester
                 foreach (var error in observer.Errors)
                 {
                     Console.WriteLine($"{error.Exception?.FlattenInnerMessages() ?? error.Status.ToString()}: {error.Url}\nReferrers:\n  {string.Join("\n  ", result[error.Url].Referrers)}\n");
+                }
+            }
+
+            if (fullSummary)
+            {
+                Console.WriteLine("###########################################################################################33");
+                foreach (var uri in result.Where(x => x.Value.Status != null).Select(x => x.Key).OrderBy(x => x.ToString()))
+                {
+                    var entry = result[uri];
+                    Console.WriteLine($"[{entry.Status}] {uri}: \nReferrers:\n  {string.Join("\n  ", entry.Referrers)}\n");
                 }
             }
         }
