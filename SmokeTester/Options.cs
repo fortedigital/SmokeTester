@@ -10,6 +10,9 @@ namespace Forte.SmokeTester
         [Option('u', "url", Required = true, HelpText = "Start urls where the crawling will begin. You can pass sitemap url as well For multiple urls separate url with space. E.g. -u https://bbc.co.uk https://msn.com")]
         public IEnumerable<string> StartUrls { get; set; }
 
+        [Option('e', "test-external", Default = false, HelpText = "Test 1st level external urls.")]
+        public bool TestExternalUrls { get; set; }
+
         [Option('d', "depth", Default = 3, HelpText = "Maximum depth of url to extract.")]
         public int MaxDepth { get; set; }
 
@@ -36,6 +39,12 @@ namespace Forte.SmokeTester
 
         [Option('h', "headers", HelpText = "HTTP headers sent with request. Format: header_name:header_value|header_name2:header_value2.")]
         public string RequestHeadersRawValue { get; set; }
+
+        [Option('a', "user-agent", HelpText = "Sets user agent header value")]
+        public string UserAgent { get; set; }
+
+        [Option( "full-summary", HelpText = "Shows full report of crawled urls")]
+        public bool FullSummary { get; set; }
 
         public IReadOnlyDictionary<string, string> RequestHeaders
         {

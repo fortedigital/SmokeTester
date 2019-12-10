@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Forte.SmokeTester.Extractor;
@@ -19,6 +20,7 @@ namespace Forte.SmokeTester
         private readonly ICrawlRequestFilter crawlRequestFilter;
         private readonly ICrawlerObserver observer;
         private readonly int maxRetries;
+        private readonly string userAgent;
         private readonly IReadOnlyDictionary<string, string> customHttpHeaders;
 
         private readonly WorkerPool workerPool;
@@ -27,7 +29,7 @@ namespace Forte.SmokeTester
         private readonly ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl> discoveredUrls = new ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl>();
 
         public Crawler(WorkerPool workerPool, ICrawlRequestFilter crawlRequestFilter, ILinkExtractor linkExtractor, ICrawlerObserver observer,
-            IReadOnlyDictionary<string, string> customHttpHeaders = null, TimeSpan? requestTimeout = null, int maxRetries = 0)
+            IReadOnlyDictionary<string, string> customHttpHeaders = null, TimeSpan? requestTimeout = null, int maxRetries = 0, string userAgent=null)
         {
             if (this.maxRetries < 0) throw new ArgumentOutOfRangeException(nameof(maxRetries), "Max retries must be non-negative");
 
@@ -35,6 +37,7 @@ namespace Forte.SmokeTester
             this.linkExtractor = linkExtractor;
             this.observer = observer;
             this.maxRetries = maxRetries;
+            this.userAgent = userAgent;
             this.customHttpHeaders = customHttpHeaders ?? new Dictionary<string, string>();
             this.workerPool = workerPool;
 
@@ -115,6 +118,10 @@ namespace Forte.SmokeTester
                     Method = HttpMethod.Get,
                 };
 
+                if (string.IsNullOrEmpty(this.userAgent) == false)
+                {
+                    httpRequestMessage.Headers.TryAddWithoutValidation("User-Agent",this.userAgent);
+                }
 
                 foreach (var customHttpHeader in this.customHttpHeaders)
                 {
