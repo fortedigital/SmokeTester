@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
     <AssemblyName>Forte.SmokeTester</AssemblyName>
     <RootNamespace>Forte.SmokeTester</RootNamespace>
     <LangVersion>7.1</LangVersion>
