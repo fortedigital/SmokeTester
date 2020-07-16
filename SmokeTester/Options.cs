@@ -59,7 +59,7 @@ namespace Forte.SmokeTester
                     .Split(new[] {'|', '\r', '\n'}, StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => x.Trim())
                     .Where(x => string.IsNullOrEmpty(x) == false)
-                    .Select(x => x.Split(':', 2))
+                    .Select(x => x.Split(new []{':'}, 2))
                     .ToDictionary(x => x.ElementAt(0), x => x.ElementAtOrDefault(1));
             }
         }
