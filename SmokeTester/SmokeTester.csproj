@@ -1,16 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
     <AssemblyName>Forte.SmokeTester</AssemblyName>
     <RootNamespace>Forte.SmokeTester</RootNamespace>
     <LangVersion>7.1</LangVersion>
-    <OutputType>Exe</OutputType>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AngleSharp" Version="0.14.0" />
-    <PackageReference Include="CommandLineParser" Version="2.8.0" />
+    <PackageReference Include="AngleSharp" Version="0.9.9.2" />
+    <PackageReference Include="CommandLineParser" Version="2.2.1" />
   </ItemGroup>
 </Project>
