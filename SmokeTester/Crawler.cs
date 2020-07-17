@@ -49,8 +49,9 @@ namespace Forte.SmokeTester
 
         public void Enqueue(Uri url)
         {
-            this.workQueue.Add(new CrawlRequest(url));
-            this.discoveredUrls.TryAdd(url, new CrawledUrlPropertiesImpl(url));
+            var uriWithoutFragment = new Uri(url.GetLeftPart(UriPartial.Path));
+            this.workQueue.Add(new CrawlRequest(uriWithoutFragment));
+            this.discoveredUrls.TryAdd(url, new CrawledUrlPropertiesImpl(uriWithoutFragment));
         }
 
         public void Enqueue(IEnumerable<Uri> urls)
