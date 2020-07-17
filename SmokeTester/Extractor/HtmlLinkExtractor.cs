@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using AngleSharp.Html;
-using AngleSharp.Parser.Html;
+using AngleSharp.Dom;
+using AngleSharp.Html.Parser;
 
 namespace Forte.SmokeTester.Extractor
 {
@@ -25,7 +25,7 @@ namespace Forte.SmokeTester.Extractor
             using (var contentStream = await content.ReadAsStreamAsync())
             {
                 var parser = new HtmlParser();
-                var document = await parser.ParseAsync(contentStream);
+                var document = await parser.ParseDocumentAsync(contentStream);
 
                 return document.Links
                     .Select(l => l.GetAttribute(AttributeNames.Href))
