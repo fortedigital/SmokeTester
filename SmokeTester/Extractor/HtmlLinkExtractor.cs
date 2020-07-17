@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using AngleSharp.Html;
-using AngleSharp.Parser.Html;
+
 
 namespace Forte.SmokeTester.Extractor
 {
@@ -19,22 +18,23 @@ namespace Forte.SmokeTester.Extractor
 
         public async Task<IReadOnlyCollection<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content)
         {
-            if ("text/html".Equals(content.Headers.ContentType.MediaType, StringComparison.OrdinalIgnoreCase) == false)
-                return new Uri[0];
-
-            using (var contentStream = await content.ReadAsStreamAsync())
-            {
-                var parser = new HtmlParser();
-                var document = await parser.ParseAsync(contentStream);
-
-                return document.Links
-                    .Select(l => l.GetAttribute(AttributeNames.Href))
-                    .Select(href => BuildUri(crawlRequest, href))
-                    .Where(uri => exludedSchemas.Contains(uri.Scheme, StringComparer.OrdinalIgnoreCase) == false)
-                    .Select(this.RemoveFragment)
-                    .Distinct()
-                    .ToList();
-            }
+//            if ("text/html".Equals(content.Headers.ContentType.MediaType, StringComparison.OrdinalIgnoreCase) == false)
+//                return new Uri[0];
+//
+//            using (var contentStream = await content.ReadAsStreamAsync())
+//            {
+//                var parser = new HtmlParser();
+//                var document = await parser.ParseAsync(contentStream);
+//
+//                return document.Links
+//                    .Select(l => l.GetAttribute(AttributeNames.Href))
+//                    .Select(href => BuildUri(crawlRequest, href))
+//                    .Where(uri => exludedSchemas.Contains(uri.Scheme, StringComparer.OrdinalIgnoreCase) == false)
+//                    .Select(this.RemoveFragment)
+//                    .Distinct()
+//                    .ToList();
+//            }
+            return null;
         }
 
         private static Uri BuildUri(CrawlRequest crawlRequest, string href)
