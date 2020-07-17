@@ -6,4 +6,8 @@
     <RootNamespace>Forte.SmokeTester</RootNamespace>
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="0.9.9.2" />
+    <PackageReference Include="CommandLineParser" Version="2.2.1" />
+  </ItemGroup>
 </Project>
