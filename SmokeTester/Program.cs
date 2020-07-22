@@ -116,7 +116,9 @@ namespace Forte.SmokeTester
 
         private static void WriteReferrers(IReadOnlyDictionary<Uri, CrawledUrlProperties> result, CrawlError error)
         {
-            var referrersCount = result[error.Url].Referrers.Count();
+            var referrers = result[error.Url].Referrers;
+            var referrersCount = referrers.Count();
+            
             if (referrersCount > 10)
             {
                 Console.WriteLine($"Referrers (showing 10 of {referrersCount}):");
@@ -126,7 +128,7 @@ namespace Forte.SmokeTester
                 Console.WriteLine($"Referrers ({referrersCount}):");
             }
 
-            Console.WriteLine($"  {string.Join("\n  ", result[error.Url].Referrers.Take(10))}\n");
+            Console.WriteLine($"  {string.Join("\n  ", referrers.Take(10))}\n");
         }
     }
 }
