@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -88,7 +88,8 @@ namespace Forte.SmokeTester
                 Console.WriteLine("\nCrawl warnings:\n");
                 foreach (var error in observer.Warnings)
                 {
-                    Console.WriteLine($"{error.Status}: {error.Url}\nReferrers:\n  {string.Join("\n  ", result[error.Url].Referrers)}\n");
+                    Console.WriteLine($"{error.Status}: {error.Url}");
+                    WriteReferrers(result, error);
                 }
             }
 
@@ -97,7 +98,8 @@ namespace Forte.SmokeTester
                 Console.WriteLine("\nCrawl errors:\n");
                 foreach (var error in observer.Errors)
                 {
-                    Console.WriteLine($"{error.Exception?.FlattenInnerMessages() ?? error.Status.ToString()}: {error.Url}\nReferrers:\n  {string.Join("\n  ", result[error.Url].Referrers)}\n");
+                    Console.WriteLine($"{error.Exception?.FlattenInnerMessages() ?? error.Status.ToString()}: {error.Url}");
+                    WriteReferrers(result, error);
                 }
             }
 
@@ -110,6 +112,23 @@ namespace Forte.SmokeTester
                     Console.WriteLine($"[{entry.Status}] {uri}: \nReferrers:\n  {string.Join("\n  ", entry.Referrers)}\n");
                 }
             }
+        }
+
+        private static void WriteReferrers(IReadOnlyDictionary<Uri, CrawledUrlProperties> result, CrawlError error)
+        {
+            var referrers = result[error.Url].Referrers;
+            var referrersCount = referrers.Count();
+            
+            if (referrersCount > 10)
+            {
+                Console.WriteLine($"Referrers (showing 10 of {referrersCount}):");
+            }
+            else
+            {
+                Console.WriteLine($"Referrers ({referrersCount}):");
+            }
+
+            Console.WriteLine($"  {string.Join("\n  ", referrers.Take(10))}\n");
         }
     }
 }
