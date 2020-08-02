@@ -29,7 +29,7 @@ namespace Forte.SmokeTester
         private readonly ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl> discoveredUrls = new ConcurrentDictionary<Uri, CrawledUrlPropertiesImpl>();
 
         public Crawler(WorkerPool workerPool, ICrawlRequestFilter crawlRequestFilter, ILinkExtractor linkExtractor, ICrawlerObserver observer,
-            IReadOnlyDictionary<string, string> customHttpHeaders = null, TimeSpan? requestTimeout = null, int maxRetries = 0, string userAgent=null)
+            IReadOnlyDictionary<string, string> customHttpHeaders = null, TimeSpan? requestTimeout = null, int maxRetries = 0, string userAgent = null)
         {
             if (this.maxRetries < 0) throw new ArgumentOutOfRangeException(nameof(maxRetries), "Max retries must be non-negative");
 
@@ -90,7 +90,6 @@ namespace Forte.SmokeTester
 
         private async Task CrawlWithRetires(CrawlRequest request, CancellationToken cancellationToken)
         {
-
             for (var tryNo = 0; tryNo <= this.maxRetries; tryNo++)
             {
                 var isLastTry = tryNo == this.maxRetries;
@@ -102,6 +101,12 @@ namespace Forte.SmokeTester
                 if (success)
                 {
                     return;
+                }
+
+                if (isLastTry == false)
+                {
+                    //Wait before next retry, first retry immediately
+                    await Task.Delay(TimeSpan.FromMilliseconds(500 * tryNo), cancellationToken);
                 }
             }
         }
@@ -121,14 +126,14 @@ namespace Forte.SmokeTester
 
                 if (string.IsNullOrEmpty(this.userAgent) == false)
                 {
-                    httpRequestMessage.Headers.TryAddWithoutValidation("User-Agent",this.userAgent);
+                    httpRequestMessage.Headers.TryAddWithoutValidation("User-Agent", this.userAgent);
                 }
 
                 foreach (var customHttpHeader in this.customHttpHeaders)
                 {
                     httpRequestMessage.Headers.Add(customHttpHeader.Key, customHttpHeader.Value);
                 }
-                
+
                 using (var response = await this.httpClient.SendAsync(httpRequestMessage, cancellationToken))
                 {
                     this.discoveredUrls[request.Url].status = response.StatusCode;

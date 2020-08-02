@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,7 +16,7 @@ namespace Forte.SmokeTester
 
             if (this.authorities.Count == 0)
             {
-                throw new ArgumentException("Expected at least authority but found 0",nameof(authorities));
+                throw new ArgumentException("Expected at least one authority but found 0", nameof(authorities));
             }
         }
 
@@ -35,7 +34,7 @@ namespace Forte.SmokeTester
 
         private bool MatchesAuthority(Uri requestUrl)
         {
-            return this.authorities.Any(x=> x.Equals(requestUrl.Authority, StringComparison.OrdinalIgnoreCase));
+            return this.authorities.Any(x => x.Equals(requestUrl.Authority, StringComparison.OrdinalIgnoreCase));
         }
     }
 }
