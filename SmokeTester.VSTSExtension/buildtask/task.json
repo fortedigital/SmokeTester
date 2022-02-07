@@ -14,9 +14,9 @@
     ],
     "author": "Forte Digital",
     "version": {
-        "Major": 1,
+        "Major": 3,
         "Minor": 0,
-        "Patch": 14
+        "Patch": 0
     },
     "instanceNameFormat": "Runs a smoke test",
     "groups": [
