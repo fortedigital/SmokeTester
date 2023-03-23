@@ -19,7 +19,7 @@ namespace Forte.SmokeTester.Extractor
 
         public async Task<IReadOnlyCollection<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content)
         {
-            if ("text/html".Equals(content.Headers.ContentType.MediaType, StringComparison.OrdinalIgnoreCase) == false)
+            if ("text/html".Equals(content.Headers.ContentType?.MediaType, StringComparison.OrdinalIgnoreCase) == false)
                 return new Uri[0];
 
             using (var contentStream = await content.ReadAsStreamAsync())

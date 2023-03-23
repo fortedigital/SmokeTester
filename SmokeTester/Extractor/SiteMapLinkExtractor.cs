@@ -12,7 +12,7 @@ namespace Forte.SmokeTester.Extractor
     {
         public async Task<IReadOnlyCollection<Uri>> ExtractLinks(CrawlRequest crawlRequest, HttpContent content)
         {
-            if ("text/xml".Equals(content.Headers.ContentType.MediaType, StringComparison.OrdinalIgnoreCase) == false)
+            if ("text/xml".Equals(content.Headers.ContentType?.MediaType, StringComparison.OrdinalIgnoreCase) == false)
                 return new Uri[0];
 
 
